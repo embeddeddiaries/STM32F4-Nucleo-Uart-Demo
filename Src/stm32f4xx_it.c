@@ -199,10 +199,14 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
+extern DMA_HandleTypeDef hdma_tx;
 
-void USARTx_DMA_TX_IRQHandler(void)
+#ifdef USEDMAUART
+
+
+void DMA1_Stream3_IRQHandler(void)
 {
-  HAL_DMA_IRQHandler(huart3.hdmatx);
+  HAL_DMA_IRQHandler(&hdma_tx);
 }
 
 /**
@@ -210,11 +214,11 @@ void USARTx_DMA_TX_IRQHandler(void)
   * @param  None
   * @retval None
   */
-void USARTx_IRQHandler(void)
+void USART3_IRQHandler(void)
 {
   HAL_UART_IRQHandler(&huart3);
 }
 
-
+#endif
 /* USER CODE END 1 */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -74,6 +74,9 @@ void Error_Handler(void);
 #define SWO_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
+
+#define USEDMAUART      1
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

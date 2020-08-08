@@ -23,14 +23,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart3;
+DMA_HandleTypeDef hdma_tx;
 
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-
 
 /**
   * @brief  The application entry point.
@@ -42,7 +41,7 @@ int main(void)
   HAL_Init();
 
   SystemClock_Config();
-  
+
   huart3.Instance = USART3;
   huart3.Init.BaudRate = 115200;
   huart3.Init.WordLength = UART_WORDLENGTH_8B;
@@ -55,47 +54,55 @@ int main(void)
   {
     Error_Handler();
   }
-
-  static DMA_HandleTypeDef hdma_tx;
-
-  hdma_tx.Instance                 = DMA1_Stream3;
-  hdma_tx.Init.Channel             = DMA_CHANNEL_4;
-  hdma_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
-  hdma_tx.Init.PeriphInc           = DMA_PINC_DISABLE;
-  hdma_tx.Init.MemInc              = DMA_MINC_ENABLE;
+#ifdef USEDMAUART
+  __HAL_RCC_DMA1_CLK_ENABLE();
+  hdma_tx.Instance = DMA1_Stream3;
+  hdma_tx.Init.Channel = DMA_CHANNEL_4;
+  hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+  hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_tx.Init.MemInc = DMA_MINC_ENABLE;
   hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
-  hdma_tx.Init.Mode                = DMA_NORMAL;
-  hdma_tx.Init.Priority            = DMA_PRIORITY_LOW;
-  hdma_tx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
-  hdma_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-  hdma_tx.Init.MemBurst            = DMA_MBURST_INC4;
-  hdma_tx.Init.PeriphBurst         = DMA_PBURST_INC4;
-  
-  HAL_DMA_Init(&hdma_tx);   
-  
-  /* Associate the initialized DMA handle to the the UART handle */
-  __HAL_LINKDMA(&huart3, hdmatx, hdma_tx);
-  
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 1);
-  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
-  
+  hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_tx.Init.Mode = DMA_NORMAL;
+  hdma_tx.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  if (HAL_DMA_Init(&hdma_tx) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  __HAL_LINKDMA(&huart3,hdmatx,hdma_tx);
+
+  /* USART3 interrupt Init */
   HAL_NVIC_SetPriority(USART3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(USART3_IRQn);
+
   
+  /* DMA interrupt init */
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+
+  
+#endif
+
   
   uint8_t str1[] = "Welcome To Embedded Diaries ! Polling demo\r\n";
   uint8_t str2[] = "Welcome To Embedded Diaries ! DMA demo\r\n";
 
-  HAL_UART_Transmit_DMA(&huart3,str2,sizeof(str2));
-  HAL_UART_Transmit(&huart3,str1,sizeof(str1),1000);
 
   while (1)
-  {
-//      HAL_Delay(1000);
+  {    
+#ifdef USEDMAUART
+  HAL_UART_Transmit_DMA(&huart3,str2,sizeof(str2));
+#else
+    HAL_UART_Transmit(&huart3,str1,sizeof(str1),1000);
+#endif
+      HAL_Delay(1000);
   }
 
 }
+
 
 /**
   * @brief System Clock Configuration
@@ -144,10 +151,10 @@ void SystemClock_Config(void)
 
 
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
-{
- 
-}
+//void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
+//{
+//
+//}
 
 
 /**
